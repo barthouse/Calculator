@@ -110,7 +110,7 @@ public class Rational {
     private void Simplify()
     {
         if (m_numerator == 0) 
-            m_denominator = 0;
+            m_denominator = 1;
         else
         {
             
