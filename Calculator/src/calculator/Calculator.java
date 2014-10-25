@@ -18,12 +18,11 @@ public class Calculator {
      */
     public static void main(String[] args) {
         
-//        String input = "-12_2/3 + 5_3/4 * 4 - 5/4 * 9/4 / 1/2 quit";
-//        Scanner scanner = new Scanner(input);
-        
+        CalcParser.Test();
+                
         try
         {
-//            Rational a = CalcParser.ParseInput(scanner);
+            System.out.print("Input: ");
             Rational a = CalcParser.ParseInput(new Scanner(System.in));
 
             System.out.print("Answer = ");

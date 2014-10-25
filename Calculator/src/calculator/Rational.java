@@ -121,6 +121,25 @@ public class Rational {
         }
     }
     
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Rational))
+                return false;	
+
+        if (obj == this)
+                return true;
+        
+        Rational in = (Rational) obj;
+
+        return (m_numerator == in.m_numerator) &&
+               (m_denominator == in.m_denominator);
+    }
+
+    @Override
+    public int hashCode(){
+            return m_numerator ^ m_denominator;
+    }
+
     private int m_numerator;
     private int m_denominator;
     
