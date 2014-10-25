@@ -9,7 +9,7 @@ package calculator;
  *
  * @author Bart
  */
-public class Math {
+public class Fractions {
     
     static int Gcd(int a, int b)
     {
@@ -23,5 +23,5 @@ public class Math {
     {
         return a * b / Gcd(a,b);
     }
-    
+
 }

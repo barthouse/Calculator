@@ -69,7 +69,7 @@ public class Rational {
     
     public void Add(Rational in)
     {
-        int lcm = Math.Lcm(m_denominator, in.m_denominator);
+        int lcm = Fractions.Lcm(m_denominator, in.m_denominator);
         
         m_numerator *= lcm / m_denominator;
         m_denominator = lcm;
@@ -81,7 +81,7 @@ public class Rational {
     
     public void Subtract(Rational in)
     {
-        int lcm = Math.Lcm(m_denominator, in.m_denominator);
+        int lcm = Fractions.Lcm(m_denominator, in.m_denominator);
         
         m_numerator *= lcm / m_denominator;
         m_denominator = lcm;
@@ -113,7 +113,8 @@ public class Rational {
             m_denominator = 0;
         else
         {
-            int gcd = Math.Gcd(m_numerator, m_denominator);
+            
+            int gcd = Fractions.Gcd(Math.abs(m_numerator), m_denominator);
             
             m_numerator /= gcd;
             m_denominator /= gcd;

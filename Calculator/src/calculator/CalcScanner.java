@@ -8,11 +8,79 @@ package calculator;
 import java.util.*;
 import java.util.regex.*;
 
+
+// State    Char    New     Action
+//
+// START    /d      VALUE   value = /d; sign = 1;
+// START    '-'     MINUS
+// START    '+'     PLUS
+// START    '*'     MULT
+// START    '/'     DIV
+// START    'q'     QUIT
+// START    other   ERROR   error: expected /d, '-', '+', '*', '/', 'q'
+//
+// VALUE    /0      END     token(rational(value,1));
+// VALUE    /d      VALUE   value *= 10; value += /d;
+// VALUE    '_'     NUMER   numerator = 0;
+// VALUE    '/'     DENOM   numerator = value; value = 0;
+// VALUE    other   ERROR   error: expected /s, /d, '_'
+//
+// NUMER    /d      NUMER   numerator *= 10; numerator += /d;
+// NUMER    '/'     DENOM   denominator = 0;
+// NUMER    other   START   error: expected /s, '/', /d
+//
+// DENOM    /0      DENOM   token(rational(sign * value * demoninator + numerator, denominator));
+// DENOM    /d      DENOM   denominator *= 10; demoninator += /d;
+// DENOM    other   ERROR   error: expected /s, /d
+//
+// MINUS    /0      START   token(Subtract);
+// MINUS    /d      VALUE   value = /d; sign = -1;
+// MINUS    other   ERROR   error: expected /s, /d
+//
+// PLUS     /0      START   token(Add);
+// PLUS     /d      VALUE   value = /d; sign = 1;
+// PLUS     other   ERROR   error: expected /s, /d
+//
+// MUL      /0      START   token(Multiply);
+// MUL      other   ERROR   error: expected /s
+//
+// DIV      /0      START   token(Divide);
+// DIV      other   ERROR   error: expected /s
+//
+// QUIT     'u'     QUIT2
+// QUIT     other   ERROR   error: expected 'u'
+//
+// QUIT2    'i'     QUIT3
+// QUIT2    other   ERROR   error: expected 'i'
+//
+// QUIT3    't'     START   token(Quit);
+// QUIT3    other   ERROR   error: expected 't'
+//
+// ERROR    other   ERROR
+//
+
+
 /**
  *
  * @author Bart
  */
 public class CalcScanner {
+    
+    public enum State 
+    {
+        START,
+        VALUE,
+        NUMER,
+        DENOM,
+        MINUS,
+        PLUS,
+        MUL,
+        DIV,
+        QUIT,
+        QUIT2,
+        QUIT3,
+        ERROR 
+    }
     
     public CalcScanner(Scanner in)
     {
@@ -47,6 +115,216 @@ public class CalcScanner {
     {
         if (m_nextToken == null && m_in.hasNext())
         {            
+            String tokenString = m_in.next();
+            int position = 0;
+            int value = 0;
+            int numerator = 0;
+            int denominator = 0;
+            int sign = 1;
+            State state = State.START;
+            
+            while(m_nextToken == null)
+            {
+                char c = 0;
+                
+                if (position < tokenString.length()) 
+                    c = tokenString.charAt(position++);
+                
+                switch(state)
+                {
+                    case START:
+                        if (Character.isSpaceChar(c))
+                        {
+                            // do nothing
+                        }
+                        else if (Character.isDigit(c))
+                        {
+                            value = c - '0';
+                            sign = 1;
+                            state = State.VALUE;
+                        }
+                        else if (c == '-')
+                        {
+                            state = State.MINUS;
+                        }
+                        else if (c == '+')
+                        {
+                            state = State.PLUS;
+                        }
+                        else if (c == '*')
+                        {
+                            state = State.MUL;
+                        }
+                        else if (c == '/')
+                        {
+                            state = State.DIV;
+                        }
+                        else if (c == 'q')
+                        {
+                            state = State.QUIT;
+                        }
+                        else
+                        {
+                            throw new CalculatorException("expected: /d, '+', '-', '/' '*' or 'q'.");
+                        }
+                        break;
+
+                    case VALUE:
+                        if (c == 0)
+                        {
+                            m_nextToken = new Token(new Rational(sign * value, 1));
+                        }
+                        else if (Character.isDigit(c))
+                        {
+                            value *= 10;
+                            value += c - '0';
+                            state = State.VALUE;
+                        }
+                        else if (c == '_')
+                        {
+                            numerator = 0;
+                            state = State.NUMER;
+                        }
+                        else if (c == '/')
+                        {
+                            numerator = value;
+                            value = 0;
+                            denominator = 0;
+                            state = State.DENOM;
+                        }
+                        else
+                        {
+                            throw new CalculatorException("expected: /s, /d, '_'");
+                        }
+                        break;
+
+                    case NUMER:
+                        if (Character.isDigit(c))
+                        {
+                            numerator *= 10;
+                            numerator += c - '0';
+                        }
+                        else if (c == '/')
+                        {
+                            denominator = 0;
+                            state = State.DENOM;
+                        }
+                        else
+                        {
+                            throw new CalculatorException("expected: /s, /d, '/'");
+                        }
+                        break;
+
+                    case DENOM:
+                        if (c == 0)
+                        {
+                            m_nextToken = new Token(new Rational(sign*((value * denominator) + numerator), denominator));
+                        }
+                        else if (Character.isDigit(c))
+                        {
+                            denominator *= 10;
+                            denominator += c - '0';
+                        }
+                        else
+                        {
+                            throw new CalculatorException("expected: /s, /d");
+                        }
+                        break;
+
+                    case MINUS:
+                        if (c == 0)
+                        {
+                            m_nextToken = new Token(Token.Type.Subtract);
+                        }
+                        else if (Character.isDigit(c))
+                        {
+                            value = c - '0';
+                            sign = -1;
+                            state = State.VALUE;
+                        }
+                        else
+                        {
+                            throw new CalculatorException("expected: /s, /d");
+                        }
+                        break;
+
+                    case PLUS:
+                        if (c == 0)
+                        {
+                            m_nextToken = new Token(Token.Type.Add);
+                        }
+                        else if (Character.isDigit(c))
+                        {
+                            value = c - '0';
+                            sign = 1;
+                            state = State.VALUE;
+                        }
+                        else
+                        {
+                            throw new CalculatorException("expected: /s, /d");
+                        }
+                        break;
+
+                    case MUL:
+                        if (c == 0)
+                        {
+                            m_nextToken = new Token(Token.Type.Multiply);
+                        }
+                        else
+                        {
+                            throw new CalculatorException("expected: /s");
+                        }
+                        break;
+
+                    case DIV:
+                        if (c == 0)
+                        {
+                            m_nextToken = new Token(Token.Type.Divide);
+                        }
+                        else
+                        {
+                            throw new CalculatorException("expected: /s");
+                        }
+                        break;
+
+                    case QUIT:
+                        if (c == 'u')
+                        {
+                            state = State.QUIT2;                            
+                        }
+                        else
+                        {
+                            throw new CalculatorException("expected: 'u'");
+                        }
+                        break;
+                        
+                    case QUIT2:
+                        if (c == 'i')
+                        {
+                            state = State.QUIT3;                            
+                        }
+                        else
+                        {
+                            throw new CalculatorException("expected: 'i'");
+                        }
+                        break;
+
+                    case QUIT3:
+                        if (c == 't')
+                        {
+                            m_nextToken = new Token(Token.Type.Quit);
+                        }
+                        else
+                        {
+                            throw new CalculatorException("expected: 't'");
+                        }
+                        break;
+                    default:
+                        assert(false);
+                }
+            }
+
+/*
             // match longest pattern first
             if( m_in.hasNext(m_wholeAndFractionPattern) )
             {
@@ -146,6 +424,8 @@ public class CalcScanner {
             {
                 throw new CalculatorException("Unrecognized token");
             }
+*/
+            
         }
         
         return (m_nextToken != null);
