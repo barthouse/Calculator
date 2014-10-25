@@ -14,13 +14,13 @@ import java.util.regex.*;
  */
 public class CalcScanner {
     
-    CalcScanner(String in)
+    public CalcScanner(Scanner in)
     {
-        m_in = new Scanner(in);
+        m_in = in;
         m_nextToken = null;
     }
     
-    boolean hasNextRational() throws CalculatorException
+    public boolean hasNextRational() throws CalculatorException
     {
         if(hasNextToken())
         {
@@ -30,7 +30,7 @@ public class CalcScanner {
         return false;
     }
     
-    Rational nextRational() throws CalculatorException
+    public Rational nextRational() throws CalculatorException
     {
         if (hasNextRational())
         {
@@ -43,7 +43,7 @@ public class CalcScanner {
         throw new CalculatorException("Expected Rational");
     }
 
-    boolean hasNextToken() throws CalculatorException
+    public boolean hasNextToken() throws CalculatorException
     {
         if (m_nextToken == null && m_in.hasNext())
         {            
@@ -151,7 +151,7 @@ public class CalcScanner {
         return (m_nextToken != null);
     }
 
-    Token peekNextToken()throws CalculatorException
+    public Token peekNextToken()throws CalculatorException
     {   
         if (!hasNextToken())
         {
@@ -161,7 +161,7 @@ public class CalcScanner {
         return m_nextToken;
     }
     
-    Token nextToken()throws CalculatorException
+    public Token nextToken()throws CalculatorException
     {
         if (!hasNextToken())
         {
@@ -174,13 +174,13 @@ public class CalcScanner {
         return nextToken;
     }
 
-    static Pattern m_wholeAndFractionPattern = Pattern.compile("(-?+)(\\d+)_(\\d+)/(\\d+)");
-    static Pattern m_FractionPattern = Pattern.compile("(-?+)(\\d+)/(\\d+)");
-    static Pattern m_wholePattern = Pattern.compile("(-?+)(\\d+)");
+    private static Pattern m_wholeAndFractionPattern = Pattern.compile("(-?+)(\\d+)_(\\d+)/(\\d+)");
+    private static Pattern m_FractionPattern = Pattern.compile("(-?+)(\\d+)/(\\d+)");
+    private static Pattern m_wholePattern = Pattern.compile("(-?+)(\\d+)");
     
-    static Pattern m_operatorPattern = Pattern.compile("\\s*([\\+\\-\\*\\/])\\s*");
+    private static Pattern m_operatorPattern = Pattern.compile("\\s*([\\+\\-\\*\\/])\\s*");
     
-    static Pattern m_quitPattern = Pattern.compile("quit");
+    private static Pattern m_quitPattern = Pattern.compile("quit");
 
     private final Scanner m_in;
     private Token m_nextToken;
