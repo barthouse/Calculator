@@ -6,8 +6,7 @@
 package calculator;
 
 import java.util.*;
-import java.util.regex.*;
-
+//import java.util.regex.*;
 
 // State    Char    New     Action
 //
@@ -21,13 +20,19 @@ import java.util.regex.*;
 //
 // VALUE    /0      END     token(rational(value,1));
 // VALUE    /d      VALUE   value *= 10; value += /d;
-// VALUE    '_'     NUMER   numerator = 0;
+// VALUE    '_'     UNDER   
 // VALUE    '/'     DENOM   numerator = value; value = 0;
 // VALUE    other   ERROR   error: expected /s, /d, '_'
 //
+// UNDER    /d      NUMER   numerator = /d;
+// UNDER    other   ERROR   error: expected /d
+//
 // NUMER    /d      NUMER   numerator *= 10; numerator += /d;
-// NUMER    '/'     DENOM   denominator = 0;
+// NUMER    '/'     FRACT   
 // NUMER    other   START   error: expected /s, '/', /d
+//
+// FRACT    /d      DENOM   denominator = /d;
+// FRACT    other   ERROR   error: expected /d
 //
 // DENOM    /0      DENOM   token(rational(sign * value * demoninator + numerator, denominator));
 // DENOM    /d      DENOM   denominator *= 10; demoninator += /d;
@@ -56,6 +61,9 @@ import java.util.regex.*;
 // QUIT3    't'     START   token(Quit);
 // QUIT3    other   ERROR   error: expected 't'
 //
+// QUIT4    /0      END     token(Quit);
+// QUIT4    other   ERROR   error: expected /s
+//
 // ERROR    other   ERROR
 //
 
@@ -70,7 +78,9 @@ public class CalcScanner {
     {
         START,
         VALUE,
+        UNDER,
         NUMER,
+        FRACT,
         DENOM,
         MINUS,
         PLUS,
@@ -79,6 +89,7 @@ public class CalcScanner {
         QUIT,
         QUIT2,
         QUIT3,
+        QUIT4,
         ERROR 
     }
     
@@ -183,18 +194,29 @@ public class CalcScanner {
                         else if (c == '_')
                         {
                             numerator = 0;
-                            state = State.NUMER;
+                            state = State.UNDER;
                         }
                         else if (c == '/')
                         {
                             numerator = value;
                             value = 0;
-                            denominator = 0;
-                            state = State.DENOM;
+                            state = State.FRACT;
                         }
                         else
                         {
                             throw new CalculatorException("expected: /s, /d, '_'");
+                        }
+                        break;
+                        
+                    case UNDER:
+                        if (Character.isDigit(c))
+                        {
+                            numerator = c - '0';
+                            state = State.NUMER;
+                        }
+                        else
+                        {
+                            throw new CalculatorException("expected: /d");
                         }
                         break;
 
@@ -206,12 +228,23 @@ public class CalcScanner {
                         }
                         else if (c == '/')
                         {
-                            denominator = 0;
-                            state = State.DENOM;
+                            state = State.FRACT;
                         }
                         else
                         {
                             throw new CalculatorException("expected: /s, /d, '/'");
+                        }
+                        break;
+                        
+                    case FRACT:
+                        if (Character.isDigit(c))
+                        {
+                            denominator = c - '0';
+                            state = State.DENOM;
+                        }
+                        else
+                        {
+                            throw new CalculatorException("expected: /d");
                         }
                         break;
 
@@ -312,13 +345,25 @@ public class CalcScanner {
                     case QUIT3:
                         if (c == 't')
                         {
-                            m_nextToken = new Token(Token.Type.Quit);
+                            state = State.QUIT4;                            
                         }
                         else
                         {
                             throw new CalculatorException("expected: 't'");
                         }
                         break;
+
+                    case QUIT4:
+                        if (c == 0)
+                        {
+                            m_nextToken = new Token(Token.Type.Quit);
+                        }
+                        else
+                        {
+                            throw new CalculatorException("expected: /s");
+                        }
+                        break;
+
                     default:
                         assert(false);
                 }
@@ -454,6 +499,7 @@ public class CalcScanner {
         return nextToken;
     }
 
+/*    
     private static Pattern m_wholeAndFractionPattern = Pattern.compile("(-?+)(\\d+)_(\\d+)/(\\d+)");
     private static Pattern m_FractionPattern = Pattern.compile("(-?+)(\\d+)/(\\d+)");
     private static Pattern m_wholePattern = Pattern.compile("(-?+)(\\d+)");
@@ -461,7 +507,8 @@ public class CalcScanner {
     private static Pattern m_operatorPattern = Pattern.compile("\\s*([\\+\\-\\*\\/])\\s*");
     
     private static Pattern m_quitPattern = Pattern.compile("quit");
-
+*/
+    
     private final Scanner m_in;
     private Token m_nextToken;
     
